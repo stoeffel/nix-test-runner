@@ -1,5 +1,8 @@
 extern crate clap;
 use clap::{arg_enum, value_t, App, Arg};
+use std::io::{self, Write};
+use std::path::Path;
+use std::process::Command;
 
 arg_enum! {
     #[derive(PartialEq, Debug)]
@@ -7,12 +10,6 @@ arg_enum! {
         Human,
         Junit
     }
-}
-
-#[derive(Debug)]
-struct Arguments<'a> {
-    test_file: &'a str,
-    reporter: Reporter,
 }
 
 fn main() {
@@ -38,9 +35,26 @@ fn main() {
         .get_matches();
     let test_file = matches.value_of("TEST").unwrap();
     let reporter = value_t!(matches, "reporter", Reporter).unwrap_or_else(|e| e.exit());
-    let arguments = Arguments {
-        test_file,
-        reporter,
-    };
-    println!("Using arguments: {}", arguments.reporter);
+    println!("Using : {}", test_file);
+    println!("Using : {}", reporter);
+    let test_file_path = Path::new(test_file);
+    assert!(
+        test_file_path.exists(),
+        "You need to provide an existing file."
+    );
+    // TODO Case windows?
+    let out = Command::new("sh")
+        .arg("-c")
+        .arg(format!(
+            "nix-instantiate \
+             --json --eval --strict \
+             ./runTest.nix \
+             --arg testFile {}",
+            test_file
+        ))
+        .output()
+        .expect("failed to execute process");
+    io::stdout().write_all(&out.stdout).unwrap();
+    io::stderr().write_all(&out.stderr).unwrap();
+    assert!(out.status.success());
 }
