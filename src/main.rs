@@ -32,6 +32,7 @@ impl TestResult {
             Reporter::Json => serde_json::to_string(&self).unwrap(),
             Reporter::Human => format!(
                 "
+{failed_tests}
 {status}
 
 {durationLabel} {duration} ms
@@ -44,7 +45,11 @@ impl TestResult {
                 failedLabel = "Failed:".dimmed(),
                 duration = now.elapsed().as_millis(),
                 passed_count = self.passed.len(),
-                failed_count = self.failed.len()
+                failed_count = self.failed.len(),
+                failed_tests = self
+                    .failed
+                    .iter()
+                    .fold(String::new(), |acc, t| acc + &t.human() + "\n")
             )
             .to_string(),
             Reporter::Junit => "TODO Junit".to_string(),
@@ -66,6 +71,26 @@ struct FailedTest {
     expected: String,
     failed_test: String,
     result: String,
+}
+
+impl FailedTest {
+    fn human(&self) -> String {
+        format!(
+            "
+{name}
+
+    {result}
+    ╷
+    │ Expect.equal
+    ╵
+    {expected}
+    ",
+            name = ("✗ ".to_owned() + &self.failed_test).red(),
+            result = self.result,
+            expected = self.expected
+        )
+        .to_string()
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
