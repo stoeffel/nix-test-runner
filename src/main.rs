@@ -1,18 +1,76 @@
 extern crate clap;
+
 use clap::{arg_enum, value_t, App, Arg};
+use serde::{Deserialize, Serialize};
+use serde_json;
 use std::io::{self, Write};
 use std::path::Path;
 use std::process::Command;
+use std::str::from_utf8;
+use std::time::Instant;
 
 arg_enum! {
     #[derive(PartialEq, Debug)]
     pub enum Reporter {
         Human,
+        Json,
         Junit
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct TestResult {
+    passed: Vec<PassedTest>,
+    failed: Vec<FailedTest>,
+}
+
+impl TestResult {
+    fn format(&self, now: Instant, reporter: Reporter) -> String {
+        match reporter {
+            Reporter::Json => serde_json::to_string(&self).unwrap(),
+            Reporter::Human => format!(
+                "
+TEST RUN {status}
+Duration: {duration} ms
+Passed:   {passed_count} 
+Failed:   {failed_count} 
+                                ",
+                status = self.status(),
+                duration = now.elapsed().as_millis(),
+                passed_count = self.passed.len(),
+                failed_count = self.failed.len()
+            )
+            .to_string(),
+            Reporter::Junit => "TODO Junit".to_string(),
+        }
+    }
+
+    fn status(&self) -> &'static str {
+        if self.failed.is_empty() {
+            "PASSED"
+        } else {
+            "FAILED"
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct FailedTest {
+    expected: String,
+    failed_test: String,
+    result: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+struct PassedTest {
+    passed_test: String,
+}
+
 fn main() {
+    let now = Instant::now();
     let matches = App::new("nix-test")
         .version("0.0.1")
         .author("Christoph H. <schtoeffel@gmail.com>")
@@ -35,8 +93,6 @@ fn main() {
         .get_matches();
     let test_file = matches.value_of("TEST").unwrap();
     let reporter = value_t!(matches, "reporter", Reporter).unwrap_or_else(|e| e.exit());
-    println!("Using : {}", test_file);
-    println!("Using : {}", reporter);
     let test_file_path = Path::new(test_file);
     assert!(
         test_file_path.exists(),
@@ -54,7 +110,9 @@ fn main() {
         ))
         .output()
         .expect("failed to execute process");
-    io::stdout().write_all(&out.stdout).unwrap();
-    io::stderr().write_all(&out.stderr).unwrap();
-    assert!(out.status.success());
+    assert!(out.status.success(), "Running tests failed.");
+    let res: TestResult = serde_json::from_str(from_utf8(&out.stdout).unwrap()).unwrap();
+    io::stdout()
+        .write_all(res.format(now, reporter).as_bytes())
+        .unwrap();
 }
