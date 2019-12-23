@@ -1,6 +1,7 @@
 extern crate clap;
 
 use clap::{arg_enum, value_t, App, Arg};
+use colored::*;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::io::{self, Write};
@@ -31,12 +32,16 @@ impl TestResult {
             Reporter::Json => serde_json::to_string(&self).unwrap(),
             Reporter::Human => format!(
                 "
-TEST RUN {status}
-Duration: {duration} ms
-Passed:   {passed_count} 
-Failed:   {failed_count} 
+{status}
+
+{durationLabel} {duration} ms
+{passedLabel}   {passed_count} 
+{failedLabel}   {failed_count} 
                                 ",
                 status = self.status(),
+                durationLabel = "Duration:".dimmed(),
+                passedLabel = "Passed:".dimmed(),
+                failedLabel = "Failed:".dimmed(),
                 duration = now.elapsed().as_millis(),
                 passed_count = self.passed.len(),
                 failed_count = self.failed.len()
@@ -46,11 +51,11 @@ Failed:   {failed_count}
         }
     }
 
-    fn status(&self) -> &'static str {
+    fn status(&self) -> ColoredString {
         if self.failed.is_empty() {
-            "PASSED"
+            "TEST RUN PASSED".green().underline()
         } else {
-            "FAILED"
+            "TEST RUN FAILED".red().underline()
         }
     }
 }
