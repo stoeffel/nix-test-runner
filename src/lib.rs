@@ -13,14 +13,16 @@ const FAILED: &str = "TEST RUN FAILED";
 /// Evaluates a nix file containing test expressions.
 /// This uses `nix-instantiate --eval --strict` underthehood.
 pub fn run(test_file: &str) -> Result {
+    let run_test_nix = include_str!("./runTest.nix");
     let out = Command::new("sh")
         .arg("-c")
         .arg(format!(
             "nix-instantiate \
              --json --eval --strict \
-             ./runTest.nix \
-             --arg testFile {}",
-            test_file
+             -E '{run_test_nix}' \
+             --arg testFile {test_file}",
+            test_file = test_file,
+            run_test_nix = run_test_nix
         ))
         .output()
         .expect("failed to execute process");
