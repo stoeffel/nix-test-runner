@@ -10,6 +10,8 @@ use std::time;
 const PASSED: &str = "TEST RUN PASSED";
 const FAILED: &str = "TEST RUN FAILED";
 
+/// Evaluates a nix file containing test expressions.
+/// This uses `nix-instantiate --eval --strict` underthehood.
 pub fn run(test_file: &str) -> Result {
     let out = Command::new("sh")
         .arg("-c")
@@ -28,6 +30,7 @@ pub fn run(test_file: &str) -> Result {
 
 arg_enum! {
     #[derive(PartialEq, Debug)]
+    /// Reporter used to `format` the output of `run`ning the tests.
     pub enum Reporter {
         Human,
         Json,
@@ -35,6 +38,7 @@ arg_enum! {
     }
 }
 
+/// Result of running tests. Contains a field for all passed and failed tests.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Result {
@@ -43,6 +47,7 @@ pub struct Result {
 }
 
 impl Result {
+    /// Format the test result given a reporter.
     pub fn format(&self, now: time::Duration, reporter: Reporter) -> String {
         match reporter {
             Reporter::Json => self.json(),
