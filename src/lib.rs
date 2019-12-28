@@ -10,26 +10,10 @@ use std::time;
 const PASSED: &str = "TEST RUN PASSED";
 const FAILED: &str = "TEST RUN FAILED";
 
-static RUN_TEST_NIX: &str = "
-{ testFile, lib ? (import <nixpkgs> { }).lib }:
-with builtins;
-let
-  tests = import testFile;
-  testNames = map (t: { passedTest = t; }) (attrNames tests);
-  failed = map (t: {
-    failedTest = t.name;
-    expected = toJSON t.expected;
-    result = toJSON t.result;
-  }) (lib.debug.runTests tests);
-  failedTests = map (f: f.failedTest) failed;
-  passed = filter (t: !lib.elem t.passedTest failedTests) testNames;
-  result = { inherit passed failed; };
-in result
-";
-
 /// Evaluates a nix file containing test expressions.
 /// This uses `nix-instantiate --eval --strict` underthehood.
 pub fn run(test_file: &str) -> Result {
+    let run_test_nix = include_str!("./runTest.nix");
     let out = Command::new("sh")
         .arg("-c")
         .arg(format!(
@@ -38,7 +22,7 @@ pub fn run(test_file: &str) -> Result {
              -E '{run_test_nix}' \
              --arg testFile {test_file}",
             test_file = test_file,
-            run_test_nix = RUN_TEST_NIX
+            run_test_nix = run_test_nix
         ))
         .output()
         .expect("failed to execute process");
