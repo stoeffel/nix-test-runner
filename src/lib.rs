@@ -20,7 +20,7 @@ pub fn run(test_file: &str) -> Result {
             "nix-instantiate \
              --json --eval --strict \
              -E '{run_test_nix}' \
-             --arg testFile {test_file}",
+             --arg testFile ./{test_file}",
             test_file = test_file,
             run_test_nix = run_test_nix
         ))
