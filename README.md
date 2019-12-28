@@ -16,7 +16,7 @@ Simple cli tool to run nix expression tests.
 ```
 
 ```bash
-$ nix-test-runner my-tests.nix
+$ nix-test my-tests.nix
 ```
 
 You can get different output formats using `--reporter junit|json|human`.

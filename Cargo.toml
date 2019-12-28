@@ -5,6 +5,9 @@ authors = ["Stoeffel <schtoeffel@gmail.com>"]
 edition = "2018"
 license = "BSD-2-Clause"
 description = "Cli for running nix expression tests"
+[[bin]]
+name = "nix-test"
+path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
