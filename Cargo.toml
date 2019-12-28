@@ -3,6 +3,8 @@ name = "nix-test-runner"
 version = "0.1.0"
 authors = ["Stoeffel <schtoeffel@gmail.com>"]
 edition = "2018"
+license = "BSD-2-Clause"
+description = "Cli for running nix expression tests"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
