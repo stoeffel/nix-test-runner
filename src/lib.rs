@@ -3,6 +3,7 @@ use colored::*;
 use junit_report::{Duration, Report, TestCase, TestSuite};
 use serde::{Deserialize, Serialize};
 use serde_json;
+use std::path::PathBuf;
 use std::process::Command;
 use std::str::from_utf8;
 use std::time;
@@ -12,7 +13,7 @@ const FAILED: &str = "TEST RUN FAILED";
 
 /// Evaluates a nix file containing test expressions.
 /// This uses `nix-instantiate --eval --strict` underthehood.
-pub fn run(test_file: &str) -> Result {
+pub fn run(test_file: PathBuf) -> Result {
     let run_test_nix = include_str!("./runTest.nix");
     let out = Command::new("sh")
         .arg("-c")
@@ -20,8 +21,8 @@ pub fn run(test_file: &str) -> Result {
             "nix-instantiate \
              --json --eval --strict \
              -E '{run_test_nix}' \
-             --arg testFile ./{test_file}",
-            test_file = test_file,
+             --arg testFile {test_file}",
+            test_file = test_file.canonicalize().unwrap().to_str().unwrap(),
             run_test_nix = run_test_nix
         ))
         .output()

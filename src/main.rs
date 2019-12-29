@@ -2,7 +2,7 @@ extern crate clap;
 
 use clap::{value_t, App, Arg};
 use std::io::{self, Write};
-use std::path::Path;
+use std::path::PathBuf;
 use std::time::Instant;
 
 fn main() {
@@ -30,11 +30,11 @@ fn main() {
     let test_file = matches.value_of("TEST").unwrap();
     let reporter =
         value_t!(matches, "reporter", nix_test_runner::Reporter).unwrap_or_else(|e| e.exit());
-    let test_file_path = Path::new(test_file);
+    let test_file_path = PathBuf::from(test_file);
     assert!(
         test_file_path.exists(),
         "You need to provide an existing file."
     );
-    let result = nix_test_runner::run(test_file).format(now.elapsed(), reporter);
+    let result = nix_test_runner::run(test_file_path).format(now.elapsed(), reporter);
     io::stdout().write_all(result.as_bytes()).unwrap();
 }
