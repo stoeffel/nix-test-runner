@@ -21,8 +21,8 @@ pub fn run(test_file: PathBuf) -> Result {
             "nix-instantiate \
              --json --eval --strict \
              -E '{run_test_nix}' \
-             --arg testFile {test_file}",
-            test_file = test_file.canonicalize().unwrap().to_str().unwrap(),
+             --arg testFile {test_file:#?}",
+            test_file = test_file.canonicalize().unwrap(),
             run_test_nix = run_test_nix
         ))
         .output()
