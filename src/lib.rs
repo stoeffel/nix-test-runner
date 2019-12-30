@@ -56,11 +56,12 @@ pub struct TestResult {
 }
 
 impl TestResult {
-    /// Format the test result given a reporter.
+    /// Check if all tests were successful.
     pub fn successful(&self) -> bool {
         self.failed.is_empty()
     }
 
+    /// Format the test result given a reporter.
     pub fn format(&self, now: time::Duration, reporter: Reporter) -> String {
         match reporter {
             Reporter::Json => self.json(),
