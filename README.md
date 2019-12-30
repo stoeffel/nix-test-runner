@@ -8,15 +8,38 @@ Simple cli tool to run nix expression tests.
 ```nix
 ## my-tests.nix
 {
-  testPassedName = {
-    expr = add 1 1;
+  testFailed = {
+    expr = builtins.add 1 1;
+    expected = 1;
+  };
+  testPassed = {
+    expr = builtins.add 1 1;
     expected = 2;
   };
 }
+
 ```
 
 ```bash
 $ nix-test my-tests.nix
+
+   ✗ testFailed
+
+        2
+        ╷
+        │ Expect.equal
+        ╵
+        1
+
+
+    TEST RUN FAILED
+
+    Duration: 72 ms
+    Passed:   1
+    Failed:   1
+                                    %                                                
+~
+ 
 ```
 
 You can get different output formats using `--reporter junit|json|human`.

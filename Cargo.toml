@@ -5,6 +5,7 @@ authors = ["Stoeffel <schtoeffel@gmail.com>"]
 edition = "2018"
 license = "BSD-2-Clause"
 description = "Cli for running nix expression tests"
+readme = "README.md"
 [[bin]]
 name = "nix-test"
 path = "src/main.rs"
