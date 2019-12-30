@@ -13,7 +13,7 @@ const FAILED: &str = "TEST RUN FAILED";
 
 /// Evaluates a nix file containing test expressions.
 /// This uses `nix-instantiate --eval --strict` underthehood.
-pub fn run(test_file: PathBuf) -> Result {
+pub fn run(test_file: PathBuf) -> Result<TestResult, String> {
     let run_test_nix = include_str!("./runTest.nix");
     let out = Command::new("sh")
         .arg("-c")
@@ -26,9 +26,15 @@ pub fn run(test_file: PathBuf) -> Result {
             run_test_nix = run_test_nix
         ))
         .output()
-        .expect("failed to execute process");
-    assert!(out.status.success(), "Running tests failed.");
-    serde_json::from_str(from_utf8(&out.stdout).unwrap()).unwrap()
+        .map_err(|e| format!("{:#?}", e))?;
+    if out.status.success() {
+        Ok(serde_json::from_str(from_utf8(&out.stdout).unwrap()).unwrap())
+    } else {
+        Err(format!(
+            "Running tests failed.\n\n    {}\n",
+            from_utf8(&out.stderr).unwrap()
+        ))
+    }
 }
 
 arg_enum! {
@@ -41,16 +47,20 @@ arg_enum! {
     }
 }
 
-/// Result of running tests. Contains a field for all passed and failed tests.
+/// TestResult of running tests. Contains a field for all passed and failed tests.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Result {
+pub struct TestResult {
     passed: Vec<PassedTest>,
     failed: Vec<FailedTest>,
 }
 
-impl Result {
+impl TestResult {
     /// Format the test result given a reporter.
+    pub fn successful(&self) -> bool {
+        self.failed.is_empty()
+    }
+
     pub fn format(&self, now: time::Duration, reporter: Reporter) -> String {
         match reporter {
             Reporter::Json => self.json(),
@@ -114,7 +124,7 @@ impl Result {
     }
 
     fn status(&self) -> ColoredString {
-        if self.failed.is_empty() {
+        if self.successful() {
             PASSED.green()
         } else {
             FAILED.red()
@@ -125,7 +135,7 @@ impl Result {
 #[test]
 fn status_passed_test() {
     assert_eq!(
-        Result {
+        TestResult {
             passed: vec![],
             failed: vec![]
         }
@@ -137,7 +147,7 @@ fn status_passed_test() {
 #[test]
 fn status_failed_test() {
     assert_eq!(
-        Result {
+        TestResult {
             passed: vec![],
             failed: vec![FailedTest {
                 expected: "".to_string(),

@@ -3,6 +3,7 @@ extern crate clap;
 use clap::{value_t, App, Arg};
 use std::io::{self, Write};
 use std::path::PathBuf;
+use std::process;
 use std::time::Instant;
 
 fn main() {
@@ -35,6 +36,20 @@ fn main() {
         test_file_path.exists(),
         "You need to provide an existing file."
     );
-    let result = nix_test_runner::run(test_file_path).format(now.elapsed(), reporter);
-    io::stdout().write_all(result.as_bytes()).unwrap();
+    let result = nix_test_runner::run(test_file_path);
+    match result {
+        Ok(result) => {
+            let formatted = result.format(now.elapsed(), reporter);
+            if result.successful() {
+                io::stdout().write_all(formatted.as_bytes()).unwrap()
+            } else {
+                io::stderr().write_all(formatted.as_bytes()).unwrap();
+                process::exit(1)
+            }
+        }
+        Err(err) => {
+            io::stderr().write_all(err.as_bytes()).unwrap();
+            process::exit(1)
+        }
+    }
 }
