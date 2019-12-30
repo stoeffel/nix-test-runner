@@ -1,5 +1,7 @@
 use clap::arg_enum;
 use colored::*;
+use diff;
+use itertools::*;
 use junit_report::{Duration, Report, TestCase, TestSuite};
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -7,9 +9,12 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::str::from_utf8;
 use std::time;
+use termize;
 
 const PASSED: &str = "TEST RUN PASSED";
 const FAILED: &str = "TEST RUN FAILED";
+const ARROW_DOWN: char = '▼';
+const ARROW_UP: char = '▲';
 
 /// Evaluates a nix file containing test expressions.
 /// This uses `nix-instantiate --eval --strict` underthehood.
@@ -176,6 +181,9 @@ struct FailedTest {
 
 impl FailedTest {
     fn human(&self) -> String {
+        let result_diff = render_diff(ARROW_UP, &self.result, &self.expected);
+        let expected_diff = render_diff(ARROW_DOWN, &self.expected, &self.result);
+        let indent = 8;
         format!(
             "
     {name}
@@ -187,13 +195,41 @@ impl FailedTest {
         {expected}
         ",
             name = ("✗ ".to_owned() + &self.failed_test).red(),
-            result = self.result,
-            expected = self.expected
+            result = with_diff(&self.result, &result_diff, indent),
+            expected = with_diff(&expected_diff, &self.expected, indent)
         )
         .to_string()
     }
 }
 
+fn render_diff(symbol: char, left: &str, right: &str) -> String {
+    let mut rendered = String::new();
+    for diff in diff::chars(left, right) {
+        match diff {
+            diff::Result::Left(_) => rendered.push(symbol),
+            diff::Result::Right(_) => (),
+            diff::Result::Both(_, _) => rendered.push(' '),
+        }
+    }
+    rendered
+}
+
+fn with_diff(first: &str, second: &str, indent: usize) -> String {
+    let (width, _) = termize::dimensions().unwrap();
+    sub_strings(first, width - indent)
+        .into_iter()
+        .interleave(sub_strings(second, width - indent))
+        .join(&format!("\n{}", " ".repeat(indent)))
+}
+
+fn sub_strings(source: &str, sub_size: usize) -> Vec<String> {
+    source
+        .chars()
+        .chunks(sub_size)
+        .into_iter()
+        .map(|chunk| chunk.collect::<String>())
+        .collect::<Vec<_>>()
+}
 impl JunitTest for FailedTest {
     fn junit(&self) -> TestCase {
         TestCase::failure(
