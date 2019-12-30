@@ -160,8 +160,9 @@ fn status_failed_test() {
     )
 }
 
-trait Test {
+trait JunitTest {
     fn junit(&self) -> TestCase;
+    fn format_result(&self) -> String;
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -192,9 +193,21 @@ impl FailedTest {
     }
 }
 
-impl Test for FailedTest {
+impl JunitTest for FailedTest {
     fn junit(&self) -> TestCase {
-        TestCase::failure(&self.failed_test, Duration::zero(), "Equals", &self.human())
+        TestCase::failure(
+            &self.failed_test,
+            Duration::zero(),
+            "Equals",
+            &self.format_result(),
+        )
+    }
+    fn format_result(&self) -> String {
+        format!(
+            "Actual: {result} Expected: {expected}",
+            result = self.result,
+            expected = self.expected
+        )
     }
 }
 
@@ -204,8 +217,11 @@ struct PassedTest {
     passed_test: String,
 }
 
-impl Test for PassedTest {
+impl JunitTest for PassedTest {
     fn junit(&self) -> TestCase {
         TestCase::success(&self.passed_test, Duration::zero())
+    }
+    fn format_result(&self) -> String {
+        String::new()
     }
 }
