@@ -6,10 +6,12 @@ use std::path::PathBuf;
 use std::process;
 use std::time::Instant;
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 fn main() {
     let now = Instant::now();
     let matches = App::new("nix-test-runner")
-        .version("0.0.1")
+        .version(VERSION)
         .author("Christoph H. <schtoeffel@gmail.com>")
         .about("Run nix expression tests.")
         .arg(
