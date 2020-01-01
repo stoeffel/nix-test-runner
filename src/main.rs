@@ -8,10 +8,10 @@ use std::path::{Path, PathBuf};
 use std::process;
 use std::time::Instant;
 
-const NAME: &'static str = env!("CARGO_PKG_NAME");
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-const AUTHOR: &'static str = env!("CARGO_PKG_AUTHORS");
-const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
+static NAME: &str = env!("CARGO_PKG_NAME");
+static VERSION: &str = env!("CARGO_PKG_VERSION");
+static AUTHOR: &str = env!("CARGO_PKG_AUTHORS");
+static DESCRIPTION: &str = env!("CARGO_PKG_DESCRIPTION");
 
 fn main() {
     let now = Instant::now();
