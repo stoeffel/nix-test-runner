@@ -6,6 +6,7 @@ edition = "2018"
 license = "BSD-2-Clause"
 description = "Cli for running nix expression tests"
 readme = "README.md"
+repository = "https://github.com/stoeffel/nix-test-runner"
 [[bin]]
 name = "nix-test"
 path = "src/main.rs"
