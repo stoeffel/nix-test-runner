@@ -6,14 +6,17 @@ use std::path::PathBuf;
 use std::process;
 use std::time::Instant;
 
+const NAME: &'static str = env!("CARGO_PKG_NAME");
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const AUTHOR: &'static str = env!("CARGO_PKG_AUTHORS");
+const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
 fn main() {
     let now = Instant::now();
-    let matches = App::new("nix-test-runner")
+    let matches = App::new(NAME)
         .version(VERSION)
-        .author("Christoph H. <schtoeffel@gmail.com>")
-        .about("Run nix expression tests.")
+        .author(AUTHOR)
+        .about(DESCRIPTION)
         .arg(
             Arg::with_name("TEST")
                 .required(true)
