@@ -27,8 +27,8 @@ let
       else if lib.isAttrs v then
         pr (a:
           "{ ${
-            concatStringsSep ", "
-            (lib.attrValues (lib.mapAttrs (n: v: "${n} = ${go v}") v))
+            concatStringsSep " "
+            (lib.attrValues (lib.mapAttrs (n: v: "${n} = ${go v};") v))
           } }")
       else
         v;
