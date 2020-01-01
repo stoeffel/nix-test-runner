@@ -30,10 +30,8 @@ fn main() {
                 .case_insensitive(true),
         )
         .get_matches();
-    let test_file = matches.value_of("TEST").unwrap();
-    let reporter =
-        value_t!(matches, "reporter", nix_test_runner::Reporter).unwrap_or_else(|e| e.exit());
-    let test_file_path = PathBuf::from(test_file);
+    let reporter = value_t!(matches, "reporter", nix_test_runner::Reporter).unwrap();
+    let test_file_path = PathBuf::from(matches.value_of("TEST").unwrap());
     assert!(
         test_file_path.exists(),
         "You need to provide an existing file."
