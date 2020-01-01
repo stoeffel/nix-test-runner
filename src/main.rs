@@ -19,7 +19,7 @@ fn main() {
         .about(DESCRIPTION)
         .args(&[
             Arg::from_usage(
-                "<TEST>
+                "<TEST> +required
                 'A nix expression containing testcases.'",
             ),
             Arg::from_usage("-r, --reporter 'Reporter to display the test results.'")
