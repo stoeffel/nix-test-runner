@@ -17,21 +17,16 @@ fn main() {
         .version(VERSION)
         .author(AUTHOR)
         .about(DESCRIPTION)
-        .arg(
-            Arg::with_name("TEST")
-                .required(true)
-                .index(1)
-                .help("A nix expression containing testcases."),
-        )
-        .arg(
-            Arg::with_name("reporter")
-                .required(false)
-                .short("r")
-                .long("reporter")
-                .default_value("human")
+        .args(&[
+            Arg::from_usage(
+                "<TEST>
+                'A nix expression containing testcases.'",
+            ),
+            Arg::from_usage("-r, --reporter 'Reporter to display the test results.'")
+                .default_value("Human")
                 .possible_values(&nix_test_runner::Reporter::variants())
                 .case_insensitive(true),
-        )
+        ])
         .get_matches();
     let reporter = value_t!(matches, "reporter", nix_test_runner::Reporter).unwrap();
     let test_file_path = PathBuf::from(matches.value_of("TEST").unwrap());
