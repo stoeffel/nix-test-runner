@@ -36,16 +36,11 @@ fn main() {
         test_file_path.exists(),
         "You need to provide an existing file."
     );
-    let result = nix_test_runner::run(test_file_path);
-    match result {
+    match nix_test_runner::run(test_file_path) {
         Ok(result) => {
             let formatted = result.format(now.elapsed(), reporter);
-            if result.successful() {
-                io::stdout().write_all(formatted.as_bytes()).unwrap()
-            } else {
-                io::stderr().write_all(formatted.as_bytes()).unwrap();
-                process::exit(1)
-            }
+            io::stdout().write_all(formatted.as_bytes()).unwrap();
+            process::exit(if result.successful() { 0 } else { 1 })
         }
         Err(err) => {
             io::stderr().write_all(err.as_bytes()).unwrap();
