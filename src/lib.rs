@@ -103,7 +103,8 @@ impl TestResult {
     fn failed_to_human(&self) -> String {
         let mut failed_tests = String::new();
         for test in &self.failed {
-            failed_tests = format!("{}{}\n", failed_tests, test.human());
+            failed_tests.push_str(&test.human());
+            failed_tests.push('\n');
         }
         failed_tests
     }
