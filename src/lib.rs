@@ -4,7 +4,8 @@ use diff;
 use itertools::*;
 use junit_report::{Duration, Report, TestCase, TestSuite};
 use serde::{Deserialize, Serialize};
-use serde_json;
+use serde_json as json;
+use std::error;
 use std::path::PathBuf;
 use std::process::Command;
 use std::str::from_utf8;
@@ -33,7 +34,7 @@ pub fn run(test_file: PathBuf) -> Result<TestResult, String> {
         .output()
         .map_err(|e| format!("{:#?}", e))?;
     if out.status.success() {
-        Ok(serde_json::from_str(from_utf8(&out.stdout).unwrap()).unwrap())
+        Ok(json::from_str(from_utf8(&out.stdout).unwrap()).unwrap())
     } else {
         Err(format!(
             "Running tests failed.\n\n    {}\n",
@@ -76,7 +77,7 @@ impl TestResult {
     }
 
     fn json(&self) -> String {
-        serde_json::to_string(&self).unwrap()
+        json::to_string(&self).unwrap()
     }
 
     fn human(&self, now: time::Duration) -> String {
@@ -231,6 +232,7 @@ fn sub_strings(source: &str, sub_size: usize) -> Vec<String> {
         .map(Iterator::collect)
         .collect::<Vec<_>>()
 }
+
 impl JunitTest for FailedTest {
     fn junit(&self) -> TestCase {
         TestCase::failure(
