@@ -59,7 +59,7 @@ fn main() {
             process::exit(if result.successful() { 0 } else { 1 })
         }
         Err(err) => {
-            io::stderr().write_all(err.as_bytes()).unwrap();
+            io::stderr().write_all(err.to_string().as_bytes()).unwrap();
             process::exit(1)
         }
     }

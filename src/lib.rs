@@ -1,11 +1,12 @@
 use clap::arg_enum;
 use colored::*;
 use diff;
+use failure::{bail, Error};
+use failure_derive::Fail;
 use itertools::*;
 use junit_report::{Duration, Report, TestCase, TestSuite};
 use serde::{Deserialize, Serialize};
 use serde_json as json;
-use std::error;
 use std::path::PathBuf;
 use std::process::Command;
 use std::str::from_utf8;
@@ -17,9 +18,15 @@ const FAILED: &str = "TEST RUN FAILED";
 const ARROW_DOWN: char = '▼';
 const ARROW_UP: char = '▲';
 
+#[derive(Debug, Fail)]
+enum NixTestError {
+    #[fail(display = "There was a problem running your nix tests.\n\n    {}", msg)]
+    Running { msg: String },
+}
+
 /// Evaluates a nix file containing test expressions.
 /// This uses `nix-instantiate --eval --strict` underthehood.
-pub fn run(test_file: PathBuf) -> Result<TestResult, String> {
+pub fn run(test_file: PathBuf) -> Result<TestResult, Error> {
     let run_test_nix = include_str!("./runTest.nix");
     let out = Command::new("sh")
         .arg("-c")
@@ -32,14 +39,15 @@ pub fn run(test_file: PathBuf) -> Result<TestResult, String> {
             run_test_nix = run_test_nix
         ))
         .output()
-        .map_err(|e| format!("{:#?}", e))?;
+        .map_err(|msg| NixTestError::Running {
+            msg: msg.to_string(),
+        })?;
     if out.status.success() {
         Ok(json::from_str(from_utf8(&out.stdout).unwrap()).unwrap())
     } else {
-        Err(format!(
-            "Running tests failed.\n\n    {}\n",
-            from_utf8(&out.stderr).unwrap()
-        ))
+        bail!(NixTestError::Running {
+            msg: from_utf8(&out.stderr).unwrap().to_string()
+        })
     }
 }
 
