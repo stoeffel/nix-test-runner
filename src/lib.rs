@@ -228,7 +228,7 @@ fn sub_strings(source: &str, sub_size: usize) -> Vec<String> {
         .chars()
         .chunks(sub_size)
         .into_iter()
-        .map(|chunk| chunk.collect::<String>())
+        .map(Iterator::collect)
         .collect::<Vec<_>>()
 }
 impl JunitTest for FailedTest {
