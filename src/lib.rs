@@ -35,7 +35,7 @@ pub fn run(test_file: PathBuf) -> Result<TestResult, Error> {
              --json --eval --strict \
              -E '{run_test_nix}' \
              --arg testFile {test_file:#?}",
-            test_file = test_file.canonicalize().unwrap(),
+            test_file = test_file.canonicalize()?,
             run_test_nix = run_test_nix
         ))
         .output()
@@ -43,10 +43,10 @@ pub fn run(test_file: PathBuf) -> Result<TestResult, Error> {
             msg: msg.to_string(),
         })?;
     if out.status.success() {
-        Ok(json::from_str(from_utf8(&out.stdout).unwrap()).unwrap())
+        Ok(json::from_str(from_utf8(&out.stdout)?)?)
     } else {
         bail!(NixTestError::Running {
-            msg: from_utf8(&out.stderr).unwrap().to_string()
+            msg: from_utf8(&out.stderr)?.to_string()
         })
     }
 }
@@ -76,9 +76,9 @@ impl TestResult {
     }
 
     /// Format the test result given a reporter.
-    pub fn format(&self, now: time::Duration, reporter: Reporter) -> String {
+    pub fn format(&self, now: time::Duration, reporter: Reporter) -> Result<String, Error> {
         match reporter {
-            Reporter::Json => self.json(),
+            Reporter::Json => Ok(self.json()),
             Reporter::Human => self.human(now),
             Reporter::Junit => self.junit(),
         }
@@ -88,8 +88,8 @@ impl TestResult {
         json::to_string(&self).unwrap()
     }
 
-    fn human(&self, now: time::Duration) -> String {
-        format!(
+    fn human(&self, now: time::Duration) -> Result<String, Error> {
+        Ok(format!(
             "
     {failed_tests}
     {status}
@@ -105,27 +105,27 @@ impl TestResult {
             duration = now.as_millis(),
             passed_count = self.passed.len(),
             failed_count = self.failed.len(),
-            failed_tests = self.failed_to_human()
-        )
+            failed_tests = self.failed_to_human()?
+        ))
     }
 
-    fn failed_to_human(&self) -> String {
+    fn failed_to_human(&self) -> Result<String, Error> {
         let mut failed_tests = String::new();
         for test in &self.failed {
-            failed_tests.push_str(&test.human());
+            failed_tests.push_str(&test.human()?);
             failed_tests.push('\n');
         }
-        failed_tests
+        Ok(failed_tests)
     }
 
-    fn junit(&self) -> String {
+    fn junit(&self) -> Result<String, Error> {
         let mut report = Report::new();
         let mut test_suite = TestSuite::new("nix tests"); // TODO use file name and allow multiple files?
         test_suite.add_testcases(self.to_testcases());
         report.add_testsuite(test_suite);
         let mut out: Vec<u8> = Vec::new();
-        report.write_xml(&mut out).unwrap();
-        from_utf8(&out).unwrap().to_string()
+        report.write_xml(&mut out)?;
+        Ok(from_utf8(&out)?.to_string())
     }
 
     fn to_testcases(&self) -> Vec<TestCase> {
@@ -190,11 +190,11 @@ struct FailedTest {
 }
 
 impl FailedTest {
-    fn human(&self) -> String {
+    fn human(&self) -> Result<String, Error> {
         let result_diff = render_diff(ARROW_UP, &self.result, &self.expected);
         let expected_diff = render_diff(ARROW_DOWN, &self.expected, &self.result);
         let indent = 8;
-        format!(
+        Ok(format!(
             "
     {name}
 
@@ -208,7 +208,7 @@ impl FailedTest {
             result = with_diff(&self.result, &result_diff, indent),
             expected = with_diff(&expected_diff, &self.expected, indent)
         )
-        .to_string()
+        .to_string())
     }
 }
 
@@ -225,7 +225,7 @@ fn render_diff(symbol: char, left: &str, right: &str) -> String {
 }
 
 fn with_diff(first: &str, second: &str, indent: usize) -> String {
-    let (width, _) = termize::dimensions().unwrap();
+    let width = termize::dimensions().map(|t| t.1).unwrap_or(80);
     sub_strings(first, width - indent)
         .into_iter()
         .interleave(sub_strings(second, width - indent))

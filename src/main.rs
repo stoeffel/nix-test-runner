@@ -1,7 +1,7 @@
 extern crate clap;
 
 use clap::{value_t, App, Arg};
-use std::error::Error;
+use failure::Error;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -40,22 +40,7 @@ fn main() {
     );
     match nix_test_runner::run(test_file_path) {
         Ok(result) => {
-            let formatted = result.format(now.elapsed(), reporter);
-            match output {
-                None => io::stdout().write_all(formatted.as_bytes()).unwrap(),
-                Some(output_path) => {
-                    let display = output_path.display();
-
-                    let mut file = File::create(&output_path).unwrap_or_else(|why| {
-                        panic!("Couldn't create {}: {}", display, why.description())
-                    });
-
-                    match file.write_all(formatted.as_bytes()) {
-                        Err(why) => panic!("Couldn't write to {}: {}", display, why.description()),
-                        Ok(_) => println!("Successfully wrote to {}", display),
-                    }
-                }
-            }
+            formatting(&result, reporter, output, now).unwrap();
             process::exit(if result.successful() { 0 } else { 1 })
         }
         Err(err) => {
@@ -63,4 +48,24 @@ fn main() {
             process::exit(1)
         }
     }
+}
+
+fn formatting(
+    result: &nix_test_runner::TestResult,
+    reporter: nix_test_runner::Reporter,
+    output: Option<&Path>,
+    now: Instant,
+) -> Result<(), Error> {
+    let formatted = result.format(now.elapsed(), reporter)?;
+    match output {
+        None => io::stdout().write_all(formatted.as_bytes())?,
+        Some(output_path) => {
+            let display = output_path.display();
+            let mut file = File::create(&output_path)?;
+
+            file.write_all(formatted.as_bytes())?;
+            println!("Successfully wrote to {}", display);
+        }
+    };
+    Ok(())
 }
