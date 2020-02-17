@@ -96,8 +96,9 @@ impl TestResult {
 
     {durationLabel} {duration} ms
     {passedLabel}   {passed_count} 
-    {failedLabel}   {failed_count} 
-                                    ",
+    {failedLabel}   {failed_count}
+
+",
             status = self.status().underline(),
             durationLabel = "Duration:".dimmed(),
             passedLabel = "Passed:".dimmed(),
