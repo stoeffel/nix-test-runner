@@ -21,7 +21,7 @@ let
       in if lib.isDerivation v then
         pr (drv: "<δ:${drv.name}:${concatStringsSep "," (attrNames drv)}>")
       else if [ ] == v then
-        pr (const "[]")
+        pr (lib.const "[]")
       else if lib.isList v then
         pr (l: "[ ${toString (map go l)} ]")
       else if lib.isAttrs v then
