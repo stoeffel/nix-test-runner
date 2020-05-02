@@ -53,7 +53,8 @@ This uses `lib.debug.runTests` under the hood and doesn't change any behaviour o
 
 ## From nix
 
-Import this project into your nix build:
+Import this project into your nix build, e.g. with
+[niv](https://github.com/nmattia/niv):
 
 ```bash
 niv add stoeffel/nix-test-runner
