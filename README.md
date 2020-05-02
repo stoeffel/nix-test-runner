@@ -3,6 +3,11 @@ nix-test-runner
 
 Simple cli tool to run nix expression tests.
 
+Maintainers:
+
+* [stoeffel](https://github.com/stoeffel)
+* [kolloch](https://github.com/kolloch)
+
 ## Usage
 
 ```nix
