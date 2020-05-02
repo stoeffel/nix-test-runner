@@ -59,7 +59,7 @@ Then in your `tests.nix` file:
 ```nix
 let sources = import ./nix/sources.nix;
     nixTestRunner = sources.nix-test-runner;
-in
+in {
   failing = nixTestRunner.runTests { testFile = ./failing.nix; };
   passing = nixTestRunner.runTests { testFile = ./passing.nix; };
   passingAlwaysPretty = nixTestRunner.runTests {
@@ -81,6 +81,7 @@ in
         };
       };
     };
+}
 ```
 
 Execute all tests with e.g. `nix-build -k ./tests.nix` or include them in your
