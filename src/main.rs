@@ -29,18 +29,31 @@ fn main() {
                 .possible_values(&nix_test_runner::Reporter::variants())
                 .case_insensitive(true),
             Arg::from_usage("-o, --output=[FILE] 'Specify output file for test results.'"),
+            Arg::from_usage(
+                "--skip-run 'The given input file is already the test output as JSON.'",
+            ),
         ])
         .get_matches();
     let reporter = value_t!(matches, "reporter", nix_test_runner::Reporter).unwrap();
     let test_file_path = PathBuf::from(matches.value_of("TEST").unwrap());
     let output = matches.value_of("output").map(|o| Path::new(o));
+    let skip_run = matches.is_present("skip-run");
     assert!(
         test_file_path.exists(),
         "You need to provide an existing file."
     );
-    match nix_test_runner::run(test_file_path) {
+
+    let test_result: Result<nix_test_runner::TestResult, _> = if skip_run {
+        serde_json::from_reader(File::open(test_file_path).expect("could not open file"))
+            .map_err(|e| e.into())
+    } else {
+        nix_test_runner::run(test_file_path)
+    };
+
+    match test_result {
         Ok(result) => {
-            formatting(&result, reporter, output, now).unwrap();
+            let now_for_elapsed_reporting = if skip_run { None } else { Some(now) };
+            formatting(&result, reporter, output, now_for_elapsed_reporting).unwrap();
             process::exit(if result.successful() { 0 } else { 1 })
         }
         Err(err) => {
@@ -54,9 +67,9 @@ fn formatting(
     result: &nix_test_runner::TestResult,
     reporter: nix_test_runner::Reporter,
     output: Option<&Path>,
-    now: Instant,
+    now: Option<Instant>,
 ) -> Result<(), Error> {
-    let formatted = result.format(now.elapsed(), reporter)?;
+    let formatted = result.format(now.map(|instant| instant.elapsed()), reporter)?;
     match output {
         None => io::stdout().write_all(formatted.as_bytes())?,
         Some(output_path) => {

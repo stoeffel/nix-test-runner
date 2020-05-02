@@ -1,7 +1,8 @@
-{ testFile, lib ? (import <nixpkgs> { }).lib }:
+{ testFile ? null
+, tests ? import testFile
+, lib ? (import <nixpkgs> { }).lib }:
 with builtins;
 let
-  tests = import testFile;
   testNames = map (t: { passedTest = t; }) (attrNames tests);
   failed = map (t: {
     failedTest = t.name;

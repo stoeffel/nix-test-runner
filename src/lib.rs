@@ -76,7 +76,7 @@ impl TestResult {
     }
 
     /// Format the test result given a reporter.
-    pub fn format(&self, now: time::Duration, reporter: Reporter) -> Result<String, Error> {
+    pub fn format(&self, now: Option<time::Duration>, reporter: Reporter) -> Result<String, Error> {
         match reporter {
             Reporter::Json => Ok(self.json()),
             Reporter::Human => self.human(now),
@@ -88,14 +88,14 @@ impl TestResult {
         json::to_string(&self).unwrap()
     }
 
-    fn human(&self, now: time::Duration) -> Result<String, Error> {
+    fn human(&self, now: Option<time::Duration>) -> Result<String, Error> {
         Ok(format!(
             "
     {failed_tests}
     {status}
 
-    {durationLabel} {duration} ms
-    {passedLabel}   {passed_count} 
+    {durationLabel} {duration}
+    {passedLabel}   {passed_count}
     {failedLabel}   {failed_count}
 
 ",
@@ -103,7 +103,10 @@ impl TestResult {
             durationLabel = "Duration:".dimmed(),
             passedLabel = "Passed:".dimmed(),
             failedLabel = "Failed:".dimmed(),
-            duration = now.as_millis(),
+            duration = now
+                .as_ref()
+                .map(|d| d.as_millis().to_string() + " ms")
+                .unwrap_or_else(|| "N/A, only printing results".to_string()),
             passed_count = self.passed.len(),
             failed_count = self.failed.len(),
             failed_tests = self.failed_to_human()?
