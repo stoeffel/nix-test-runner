@@ -15,13 +15,9 @@ rec {
     in
       cargoNix.rootCrate.build.overrideAttrs (attrs: {
         meta = {
-          description = "Nix build file generator for rust crates.";
-          longDescription = ''
-            Crate2nix generates nix files from Cargo.toml/lock files
-            so that you can build every crate individually in a nix sandbox.
-          '';
-          homepage = https://github.com/kolloch/crate2nix;
-          license = lib.licenses.asl20;
+          description = "Cli for running nix expression tests.";
+          homepage = https://github.com/stoeffel/nix-test-runner;
+          license = lib.licenses.bsd2;
           maintainers = [
             {
               github = "stoeffel";
